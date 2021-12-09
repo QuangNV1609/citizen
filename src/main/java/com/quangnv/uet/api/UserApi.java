@@ -58,4 +58,9 @@ public class UserApi {
 		System.out.println(((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).toString());
 		return "test";
 	}
+	
+	@GetMapping(value = "/heroku")
+	public String heroku() {
+		return "test";
+	}
 }
