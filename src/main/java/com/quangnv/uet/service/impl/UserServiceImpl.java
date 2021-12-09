@@ -19,7 +19,10 @@ import com.quangnv.uet.entites.UserEntity;
 import com.quangnv.uet.repository.UserRepository;
 import com.quangnv.uet.service.UserSevice;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class UserServiceImpl implements UserSevice {
 	@Autowired
 	private UserRepository userRepository;
@@ -48,6 +51,7 @@ public class UserServiceImpl implements UserSevice {
 
 	@Override
 	public UserDto saveUser(UserDto userDto) {
+		log.info(userDto.toString());
 		UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
 		userEntity.setUserRole("ROLE_ADMIN");
 		userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
