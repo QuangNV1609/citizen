@@ -12,6 +12,10 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import org.hibernate.annotations.GenericGenerator;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,12 +49,12 @@ public class PeopleEntity {
 
 	@Column(name = "job", columnDefinition = "nvarchar(30)")
 	private String job;
-	
+
 	@ManyToOne
 	@JoinColumn(name = "home_town")
 	@EqualsAndHashCode.Exclude
 	private VillageEntity homeTown;
-	
+
 	@ManyToOne
 	@JoinColumn(name = "permanent_address")
 	@EqualsAndHashCode.Exclude
@@ -63,15 +67,21 @@ public class PeopleEntity {
 
 	@Column(name = "create_at")
 	@Temporal(TemporalType.TIMESTAMP)
+	@CreatedDate
 	private Date create_at;
 
-	@Column(name = "create_by")
-	private String create_by;
+	@CreatedBy
+	@ManyToOne
+	@JoinColumn(name = "create_by")
+	private UserEntity create_by;
 
 	@Column(name = "last_modified_at")
 	@Temporal(TemporalType.TIMESTAMP)
+	@LastModifiedDate
 	private Date lastModifiedAt;
 
-	@Column(name = "last_modified_by")
-	private String lastModifiedBy;
+	@LastModifiedBy
+	@ManyToOne
+	@JoinColumn(name = "last_modified_by")
+	private UserEntity lastModifiedBy;
 }

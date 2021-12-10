@@ -21,7 +21,8 @@ import lombok.NoArgsConstructor;
 @Data
 public class VillageEntity {
 	@Id
-	private Integer villageId;
+	@Column(length = 8)
+	private String villageId;
 	
 	@Column(name = "village_name", columnDefinition = "nvarchar(30)")
 	private String villageName;

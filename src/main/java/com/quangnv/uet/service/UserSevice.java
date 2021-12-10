@@ -4,7 +4,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.quangnv.uet.dto.UserDto;
 
-public interface UserSevice extends UserDetailsService{
+public interface UserSevice extends UserDetailsService {
+
+	public UserDto saveUser(UserDto userDto, String username);
 	
-	public UserDto saveUser(UserDto userDto);
+	public UserDto saveAdmin(UserDto userDto);
+	
+		
+	
 }

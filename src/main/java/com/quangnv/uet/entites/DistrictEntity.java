@@ -22,7 +22,8 @@ import lombok.NoArgsConstructor;
 @Data
 public class DistrictEntity {
 	@Id
-	private Integer districtId;
+	@Column(length = 4)
+	private String districtId;
 	
 	@Column(name = "district_name", columnDefinition = "nvarchar(30)")
 	private String districtName;
@@ -32,7 +33,7 @@ public class DistrictEntity {
 	@EqualsAndHashCode.Exclude
 	private CityEntity city;
 	
-	@OneToMany(mappedBy = "city")
+	@OneToMany(mappedBy = "district")
 	@EqualsAndHashCode.Exclude
-	private List<DistrictEntity> districts;
+	private List<WardEntity> wardEntities;
 }

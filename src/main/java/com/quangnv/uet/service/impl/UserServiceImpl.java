@@ -50,12 +50,35 @@ public class UserServiceImpl implements UserSevice {
 	}
 
 	@Override
-	public UserDto saveUser(UserDto userDto) {
-		log.info(userDto.toString());
+	public UserDto saveUser(UserDto userDto, String username) {
+		UserEntity userEntityAdmin = userRepository.findById(username).get();
+		UserEntity newUserEntity = modelMapper.map(userDto, UserEntity.class);
+
+		if (userEntityAdmin.getUserRole().equals("ADMIN")) {
+			newUserEntity.setUserRole("A1");
+		} else if (userEntityAdmin.getUserRole().equals("A1")) {
+			newUserEntity.setUserRole("A2");
+		} else if (userEntityAdmin.getUserRole().equals("A2")) {
+			newUserEntity.setUserRole("A3");
+		} else if (userEntityAdmin.getUserRole().equals("A3")) {
+			newUserEntity.setUserRole("B1");
+		} else if (userEntityAdmin.getUserRole().equals("B1")) {
+			newUserEntity.setUserRole("B2");
+		}
+		
+		log.info(newUserEntity.toString());
+
+		newUserEntity.setPassword(passwordEncoder.encode(newUserEntity.getPassword()));
+		newUserEntity = userRepository.save(newUserEntity);
+		return modelMapper.map(newUserEntity, UserDto.class);
+	}
+
+	@Override
+	public UserDto saveAdmin(UserDto userDto) {
 		UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
-		userEntity.setUserRole("ROLE_ADMIN");
+		userEntity.setUserRole("ADMIN");
 		userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
-		userEntity = userRepository.save(userEntity);
+		userRepository.save(userEntity);
 		return modelMapper.map(userEntity, UserDto.class);
 	}
 

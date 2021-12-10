@@ -20,7 +20,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CityEntity {
 	@Id
-	private Integer cityId;
+	@Column(length = 2)
+	private String cityId;
 	
 	@Column(name = "city_name", columnDefinition = "nvarchar(30)")
 	private String cityName;

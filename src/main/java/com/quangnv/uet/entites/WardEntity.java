@@ -21,9 +21,9 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class WardEntity {
-	
 	@Id
-	private Integer wardId;
+	@Column(length = 6)
+	private String wardId;
 	
 	@Column(name = "ward_name", columnDefinition = "nvarchar(30)")
 	private String wardName;

@@ -9,6 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +22,7 @@ import com.quangnv.uet.service.UserSevice;
 
 @RestController
 @RequestMapping(value = "/user")
+//@CrossOrigin(value = "http://localhost:3000/")
 public class UserApi {
 	@Autowired
 	private JwtTokenProvider jwtTokenProvider;
@@ -31,24 +33,33 @@ public class UserApi {
 	@Autowired
 	private UserSevice userSevice;
 
-	@PostMapping(value = "/save")
-	public ResponseEntity<UserDto> save(@RequestBody UserDto userDto) {
-		userDto = userSevice.saveUser(userDto);
+	@PostMapping(value = "/register")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<UserDto> register(@RequestBody UserDto userDto) {
+		String username = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+		userDto = userSevice.saveUser(userDto, username);
 		return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
 	}
-
+	
+	@PostMapping(value = "/register/admin")
+	public ResponseEntity<UserDto> registerAdmin(@RequestBody UserDto userDto) {
+		userDto = userSevice.saveAdmin(userDto);
+		return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
+	}
+	
 	@PostMapping(value = "/login")
 	public ResponseEntity<UserDto> login(@RequestBody UserDto userDto) {
 		Authentication authentication = authenticationManager
 				.authenticate(new UsernamePasswordAuthenticationToken(userDto.getUsername(), userDto.getPassword()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-		userDto.setUsername(((User) authentication.getPrincipal()).getUsername());
+		User user = (User) authentication.getPrincipal();
+		userDto.setUsername(user.getUsername());
+		userDto.setUserRole(user.getAuthorities().toString());
 		userDto.setPassword(null);
-
 		String jwt = jwtTokenProvider.generateToken(userDto);
-
 		userDto.setJwt(jwt);
+
 		return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
 	}
 
@@ -58,7 +69,7 @@ public class UserApi {
 		System.out.println(((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).toString());
 		return "test";
 	}
-	
+
 	@GetMapping(value = "/heroku")
 	public String heroku() {
 		return "test";

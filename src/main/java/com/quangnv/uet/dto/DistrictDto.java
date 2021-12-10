@@ -3,15 +3,18 @@ package com.quangnv.uet.dto;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
-public class CityDto {
+@NoArgsConstructor
+public class DistrictDto {
+	private String districtId;
+	private String districtName;
 	private String cityId;
-	private String cityName;
 	
-	private List<DistrictDto> districts;
+	private List<WardDto> wards;
 }
