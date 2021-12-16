@@ -40,14 +40,14 @@ public class UserEntity {
 	@Column(name = "enable")
 	private boolean enable;
 
-	@Column(name = "create_at")
+	@Column(name = "create_at", updatable = false)
 	@Temporal(TemporalType.TIMESTAMP)
 	@CreatedDate
 	private Date create_at;
 
 	@CreatedBy
 	@ManyToOne
-	@JoinColumn(name = "create_by")
+	@JoinColumn(name = "create_by", updatable = false)
 	private UserEntity create_by;
 
 	@Column(name = "last_modified_at")

@@ -4,6 +4,7 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -16,6 +17,7 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +28,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class PeopleEntity {
 	@Id
 	@GeneratedValue(generator = "UUID")
@@ -65,14 +68,14 @@ public class PeopleEntity {
 	@JoinColumn(name = "staying_address")
 	private VillageEntity stayingAddress;
 
-	@Column(name = "create_at")
+	@Column(name = "create_at", updatable = false)
 	@Temporal(TemporalType.TIMESTAMP)
 	@CreatedDate
 	private Date create_at;
 
 	@CreatedBy
 	@ManyToOne
-	@JoinColumn(name = "create_by")
+	@JoinColumn(name = "create_by", updatable = false)
 	private UserEntity create_by;
 
 	@Column(name = "last_modified_at")

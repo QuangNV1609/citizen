@@ -10,27 +10,30 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.quangnv.uet.filters.JwtTokenFilter;
+import com.quangnv.uet.jwt.JwtAuthenticationEntryPoint;
+import com.quangnv.uet.jwt.JwtTokenFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true) 
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired
 	private UserDetailsService userDetailsService;
-	
+
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
-	@Bean
-	public JwtTokenFilter jwtTokenFilter() {
-		return new JwtTokenFilter();
-	}
+	@Autowired
+	private JwtAuthenticationEntryPoint authenticationEntryPoint;
+
+	@Autowired
+	public JwtTokenFilter jwtTokenFilter;
 
 	@Bean(BeanIds.AUTHENTICATION_MANAGER)
 	@Override
@@ -46,7 +49,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		
 //		http.authorizeRequests().antMatchers("/user/test").hasRole("ADMIN");
 		
-		http.addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+		
+		http.exceptionHandling().authenticationEntryPoint(authenticationEntryPoint);
+		
+		http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 	}
 
 	@Override

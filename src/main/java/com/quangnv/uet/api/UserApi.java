@@ -38,6 +38,7 @@ public class UserApi {
 	public ResponseEntity<UserDto> register(@RequestBody UserDto userDto) {
 		String username = ((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
 		userDto = userSevice.saveUser(userDto, username);
+		userDto.setPassword(null);
 		return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
 	}
 	

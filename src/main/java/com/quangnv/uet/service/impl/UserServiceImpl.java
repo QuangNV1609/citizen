@@ -54,22 +54,25 @@ public class UserServiceImpl implements UserSevice {
 		UserEntity userEntityAdmin = userRepository.findById(username).get();
 		UserEntity newUserEntity = modelMapper.map(userDto, UserEntity.class);
 
-		if (userEntityAdmin.getUserRole().equals("ADMIN")) {
-			newUserEntity.setUserRole("A1");
-		} else if (userEntityAdmin.getUserRole().equals("A1")) {
-			newUserEntity.setUserRole("A2");
-		} else if (userEntityAdmin.getUserRole().equals("A2")) {
-			newUserEntity.setUserRole("A3");
-		} else if (userEntityAdmin.getUserRole().equals("A3")) {
-			newUserEntity.setUserRole("B1");
-		} else if (userEntityAdmin.getUserRole().equals("B1")) {
-			newUserEntity.setUserRole("B2");
+		if (userEntityAdmin.getUserRole().equals("ROLE_ADMIN")) {
+			newUserEntity.setUserRole("ROLE_A1");
+		} else if (userEntityAdmin.getUserRole().equals("ROLE_A1")) {
+			newUserEntity.setUserRole("ROLE_A2");
+		} else if (userEntityAdmin.getUserRole().equals("ROLE_A2")) {
+			newUserEntity.setUserRole("ROLE_A3");
+		} else if (userEntityAdmin.getUserRole().equals("ROLE_A3")) {
+			newUserEntity.setUserRole("ROLE_B1");
+		} else if (userEntityAdmin.getUserRole().equals("ROLE_B1")) {
+			newUserEntity.setUserRole("ROLE_B2");
 		}
-		
+
+		newUserEntity.setEnable(true);
+
 		log.info(newUserEntity.toString());
 
 		newUserEntity.setPassword(passwordEncoder.encode(newUserEntity.getPassword()));
 		newUserEntity = userRepository.save(newUserEntity);
+		
 		return modelMapper.map(newUserEntity, UserDto.class);
 	}
 
