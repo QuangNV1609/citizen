@@ -5,9 +5,11 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
@@ -43,12 +45,15 @@ public class UserEntity {
 	@Column(name = "create_at", updatable = false)
 	@Temporal(TemporalType.TIMESTAMP)
 	@CreatedDate
-	private Date create_at;
+	private Date createAt;
+
+	@OneToOne(mappedBy = "user", fetch = FetchType.EAGER)
+	private DeclarationTime declarationTime;
 
 	@CreatedBy
 	@ManyToOne
 	@JoinColumn(name = "create_by", updatable = false)
-	private UserEntity create_by;
+	private UserEntity createBy;
 
 	@Column(name = "last_modified_at")
 	@LastModifiedDate

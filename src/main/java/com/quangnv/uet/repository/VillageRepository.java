@@ -7,5 +7,6 @@ import com.quangnv.uet.entites.VillageEntity;
 
 @Repository
 public interface VillageRepository extends JpaRepository<VillageEntity, String> {
+	
 
 }

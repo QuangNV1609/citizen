@@ -38,35 +38,6 @@ public class LocationSeviceImpl implements LocationService {
 	@Autowired
 	private VillageRepository villageRepository;
 
-	public void saveListCity(List<CityDto> cityDtos) {
-		for (CityDto cityDto : cityDtos) {
-			CityEntity cityEntity = modelMapper.map(cityDto, CityEntity.class);
-			if (Integer.parseInt(cityEntity.getCityId()) < 10) {
-				cityEntity.setCityId("0" + cityEntity.getCityId());
-			}
-			cityEntity = cityRepository.save(cityEntity);
-
-			for (DistrictDto districtDto : cityDto.getDistricts()) {
-				DistrictEntity districtEntity = modelMapper.map(districtDto, DistrictEntity.class);
-				if (Integer.parseInt(districtEntity.getDistrictId()) < 10) {
-					districtEntity.setDistrictId(cityEntity.getCityId() + "0" + districtEntity.getDistrictId());
-				}
-				districtEntity.setCity(cityEntity);
-				districtEntity = districtRepository.save(districtEntity);
-
-				for (WardDto wardDto : districtDto.getWards()) {
-					WardEntity wardEntity = modelMapper.map(wardDto, WardEntity.class);
-					if (Integer.parseInt(wardEntity.getWardId()) < 10) {
-						wardEntity.setWardId(districtEntity.getDistrictId() + "0" + wardEntity.getWardId());
-					}
-					wardEntity.setDistrict(districtEntity);
-					wardRepository.save(wardEntity);
-				}
-
-			}
-		}
-	}
-
 	@Override
 	public void saveListDistrict(List<DistrictDto> districtDtos, String cityId) {
 		CityEntity cityEntity = cityRepository.findById(cityId).get();
@@ -113,12 +84,13 @@ public class LocationSeviceImpl implements LocationService {
 	}
 
 	@Override
-	public List<CityDto> getCity() {
+	public List<CityDto> getCities() {
 		List<CityEntity> cityEntities = cityRepository.findAll();
 		List<CityDto> cityDtos = new ArrayList<CityDto>();
 
 		for (CityEntity cityEntity : cityEntities) {
-			CityDto cityDto = modelMapper.map(cityEntity, CityDto.class);
+			CityDto cityDto = CityDto.builder().cityId(cityEntity.getCityId()).cityName(cityEntity.getCityName())
+					.build();
 			cityDtos.add(cityDto);
 		}
 		return cityDtos;
@@ -130,7 +102,8 @@ public class LocationSeviceImpl implements LocationService {
 
 		List<DistrictDto> districtDtos = new ArrayList<DistrictDto>();
 		for (DistrictEntity districtEntity : cityEntity.getDistrict()) {
-			DistrictDto districtDto = modelMapper.map(districtEntity, DistrictDto.class);
+			DistrictDto districtDto = DistrictDto.builder().districtId(districtEntity.getDistrictId())
+					.districtName(districtEntity.getDistrictName()).build();
 			districtDtos.add(districtDto);
 		}
 		return districtDtos;
@@ -142,7 +115,8 @@ public class LocationSeviceImpl implements LocationService {
 		List<WardDto> wardDtos = new ArrayList<WardDto>();
 
 		for (WardEntity wardEntity : districtEntity.getWardEntities()) {
-			WardDto wardDto = modelMapper.map(wardEntity, WardDto.class);
+			WardDto wardDto = WardDto.builder().wardId(wardEntity.getWardId()).wardName(wardEntity.getWardName())
+					.build();
 			wardDtos.add(wardDto);
 		}
 		return wardDtos;
@@ -150,7 +124,55 @@ public class LocationSeviceImpl implements LocationService {
 
 	@Override
 	public List<VillageDto> getVillageByWardId(String wardId) {
-		// TODO Auto-generated method stub
-		return null;
+		WardEntity wardEntity = wardRepository.findById(wardId).get();
+		List<VillageDto> villageDtos = new ArrayList<VillageDto>();
+
+		for (VillageEntity villageEntity : wardEntity.getVillages()) {
+			VillageDto villageDto = VillageDto.builder().villageId(villageEntity.getVillageId())
+					.villageName(villageEntity.getVillageName()).build();
+			villageDtos.add(villageDto);
+		}
+		return villageDtos;
 	}
+
+	@Override
+	public List<DistrictDto> getDistrictByCityId(String[] cityIds) {
+		List<DistrictDto> districtDtos = new ArrayList<DistrictDto>();
+		for (CityEntity cityEntity : cityRepository.findCityByCityIds(cityIds)) {
+			for (DistrictEntity districtEntity : cityEntity.getDistrict()) {
+				DistrictDto districtDto = DistrictDto.builder().districtId(districtEntity.getDistrictId())
+						.districtName(districtEntity.getDistrictName()).build();
+				districtDtos.add(districtDto);
+			}
+		}
+		return districtDtos;
+	}
+
+	@Override
+	public List<WardDto> getWardByDistrictId(String[] districtIds) {
+		List<WardDto> wardDtos = new ArrayList<WardDto>();
+		for (DistrictEntity districtEntity : districtRepository.findDistrictByDistrictIds(districtIds)) {
+			for (WardEntity wardEntity : districtEntity.getWardEntities()) {
+				WardDto wardDto = WardDto.builder().wardId(wardEntity.getWardId()).wardName(wardEntity.getWardName())
+						.build();
+				wardDtos.add(wardDto);
+			}
+		}
+		return wardDtos;
+	}
+
+	@Override
+	public List<VillageDto> getVillageByWardId(String[] wardIds) {
+		List<VillageDto> villageDtos = new ArrayList<VillageDto>();
+
+		for (WardEntity wardEntity : wardRepository.findWardByWardIds(wardIds)) {
+			for (VillageEntity villageEntity : wardEntity.getVillages()) {
+				VillageDto villageDto = VillageDto.builder().villageId(villageEntity.getVillageId())
+						.villageName(villageEntity.getVillageName()).build();
+				villageDtos.add(villageDto);
+			}
+		}
+		return villageDtos;
+	}
+
 }

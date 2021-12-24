@@ -8,7 +8,7 @@ import com.quangnv.uet.dto.VillageDto;
 import com.quangnv.uet.dto.WardDto;
 
 public interface LocationService {
-	public List<CityDto> getCity();
+	public List<CityDto> getCities();
 
 	public List<DistrictDto> getDistrictByCityId(String cityId);
 
@@ -16,8 +16,12 @@ public interface LocationService {
 
 	public List<VillageDto> getVillageByWardId(String wardId);
 
-	public void saveListCity(List<CityDto> cityDtos);
+	public List<DistrictDto> getDistrictByCityId(String[] cityIds);
 
+	public List<WardDto> getWardByDistrictId(String[] districtIds);
+
+	public List<VillageDto> getVillageByWardId(String[] wardIds);
+	
 	public void saveListDistrict(List<DistrictDto> districtDtos, String cityId);
 
 	public void saveListWard(List<WardDto> wardDtos, String districtId);

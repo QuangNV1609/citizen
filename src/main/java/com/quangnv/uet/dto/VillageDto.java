@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class VillageDto {
 	private String villageId;
 	private String villageName;
-	private String wardId;
+	private WardDto ward;
 	
 }

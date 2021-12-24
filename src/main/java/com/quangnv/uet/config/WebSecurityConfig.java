@@ -32,8 +32,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private JwtAuthenticationEntryPoint authenticationEntryPoint;
 
-	@Autowired
-	public JwtTokenFilter jwtTokenFilter;
+	@Bean
+	public JwtTokenFilter jwtTokenFilter() {
+		return new JwtTokenFilter();
+	}
 
 	@Bean(BeanIds.AUTHENTICATION_MANAGER)
 	@Override
@@ -46,14 +48,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		http.csrf().disable();
 		http.cors().disable();
-		
+
 //		http.authorizeRequests().antMatchers("/user/test").hasRole("ADMIN");
-		
+
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-		
+
 		http.exceptionHandling().authenticationEntryPoint(authenticationEntryPoint);
-		
-		http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+		http.addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 	}
 
 	@Override

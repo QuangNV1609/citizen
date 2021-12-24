@@ -23,19 +23,13 @@ public class VillageEntity {
 	@Id
 	@Column(length = 8)
 	private String villageId;
-	
+
 	@Column(name = "village_name", columnDefinition = "nvarchar(30)")
 	private String villageName;
-	
-	@OneToMany(mappedBy = "homeTown")
-	private List<PeopleEntity> homeTown;
-	
-	@OneToMany(mappedBy = "permanentAddress")
-	private List<PeopleEntity> permanentAddress;
 
-	@OneToMany(mappedBy = "stayingAddress")
-	private List<PeopleEntity> stayingAddress;
-	
+	@OneToMany(mappedBy = "village")
+	private List<PeopleLocation> peopleLocations;
+
 	@ManyToOne
 	@JoinColumn(name = "ward_id")
 	private WardEntity ward;
