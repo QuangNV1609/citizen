@@ -14,8 +14,10 @@ import lombok.NoArgsConstructor;
 public class UserDto {
 	private String username;
 	private String password;
+	private String oldPassword;
 	private String userRole;
 	private String location;
+	private String level;
 	private boolean enable;
 	private String state;
 	private Date start;

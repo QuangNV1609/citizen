@@ -1,5 +1,7 @@
 package com.quangnv.uet.api;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.quangnv.uet.dto.AnalysisData;
 import com.quangnv.uet.dto.ListPeopleDto;
+import com.quangnv.uet.dto.LocationInfo;
 import com.quangnv.uet.dto.PeopleDto;
 import com.quangnv.uet.exception.ResourenotFoundException;
 import com.quangnv.uet.service.PeopleService;
@@ -42,7 +45,7 @@ public class PeopleApi {
 	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<ListPeopleDto> findPeopleByLocation(
 			@RequestParam(name = "size", defaultValue = "100", required = false) Integer size,
-			@RequestParam(name = "page", defaultValue = "100", required = false) Integer page,
+			@RequestParam(name = "page", defaultValue = "1", required = false) Integer page,
 			@RequestParam(name = "locationType", required = false) String locationType,
 			@RequestParam(name = "locationIds", required = false) String[] locationIds) {
 		UserDetails user = (UserDetails) (SecurityContextHolder.getContext().getAuthentication().getPrincipal());
@@ -60,7 +63,7 @@ public class PeopleApi {
 	}
 
 	@GetMapping(value = "/analysis")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("@authorizationServiceImpl.checkAuthorization(#locationIds, authentication.principal)")
 	public ResponseEntity<AnalysisData> analysisData(
 			@RequestParam(name = "locationType", required = false) String locationType,
 			@RequestParam(name = "locationIds", required = false) String[] locationIds) {
@@ -70,10 +73,21 @@ public class PeopleApi {
 		return new ResponseEntity<AnalysisData>(analysisData, HttpStatus.OK);
 	}
 
+	@GetMapping(value = "/current")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<List<LocationInfo>> getLocationInfoCurrent(
+			@RequestParam(name = "locationType", required = false) String locationType,
+			@RequestParam(name = "locationIds", required = false) String[] locationIds) {
+		UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		List<LocationInfo> locationInfos = peopleService.getLocationInfoCurrent(userDetails, locationType, locationIds);
+		return new ResponseEntity<List<LocationInfo>>(locationInfos, HttpStatus.OK);
+	}
+
 	@GetMapping(value = "/location/filters")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<ListPeopleDto> findPeopleByFilters(
 			@RequestParam(name = "size", defaultValue = "100", required = false) Integer size,
-			@RequestParam(name = "page", defaultValue = "100", required = false) Integer page,
+			@RequestParam(name = "page", defaultValue = "1", required = false) Integer page,
 			@RequestParam(name = "locationType", required = false) String locationType,
 			@RequestParam(name = "locationIds", required = false) String[] locationIds) {
 		String userId = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -82,6 +96,7 @@ public class PeopleApi {
 	}
 
 	@PostMapping(value = "/save")
+	@PreAuthorize("hasRole('B1')")
 	public ResponseEntity<String> savePeople(@RequestBody PeopleDto peopleDto) {
 		String message = peopleService.savePeople(peopleDto);
 		return new ResponseEntity<String>(message, HttpStatus.CREATED);
@@ -96,6 +111,7 @@ public class PeopleApi {
 	}
 
 	@DeleteMapping(value = "/{peopleId}")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<String> deletePeopleById(@PathVariable("peopleId") String peopleId) {
 		String message = peopleService.deletePeopleById(peopleId);
 		return new ResponseEntity<String>(message, HttpStatus.OK);

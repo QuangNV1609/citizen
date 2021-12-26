@@ -7,9 +7,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import com.quangnv.uet.dto.UserDto;
 
 public interface UserSevice extends UserDetailsService {
+	public String changePasswordUser(UserDto userDto);
 
 	public UserDto saveUser(UserDto userDto, String username);
-
+	
 	public UserDto saveAdmin(UserDto userDto);
 
 	public String disable(String username, Boolean disable);

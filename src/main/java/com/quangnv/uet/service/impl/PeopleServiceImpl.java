@@ -1,7 +1,10 @@
 package com.quangnv.uet.service.impl;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -13,18 +16,26 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.quangnv.uet.dto.AgeEducation;
+import com.quangnv.uet.dto.AgeGender;
+import com.quangnv.uet.dto.AgeLevel;
 import com.quangnv.uet.dto.AnalysisData;
 import com.quangnv.uet.dto.ListPeopleDto;
 import com.quangnv.uet.dto.LocationInfo;
 import com.quangnv.uet.dto.PeopleDto;
 import com.quangnv.uet.dto.PeopleLocationDto;
 import com.quangnv.uet.dto.VillageDto;
+import com.quangnv.uet.entites.CityEntity;
+import com.quangnv.uet.entites.DeclarationTime;
+import com.quangnv.uet.entites.DistrictEntity;
 import com.quangnv.uet.entites.PeopleEntity;
 import com.quangnv.uet.entites.PeopleLocation;
 import com.quangnv.uet.entites.VillageEntity;
+import com.quangnv.uet.entites.WardEntity;
 import com.quangnv.uet.entites.ids.PeopleLocationId;
 import com.quangnv.uet.exception.ResourenotFoundException;
 import com.quangnv.uet.repository.CityRepository;
+import com.quangnv.uet.repository.DeclarationRepository;
 import com.quangnv.uet.repository.DistrictRepository;
 import com.quangnv.uet.repository.PeopleLocationRepository;
 import com.quangnv.uet.repository.PeopleRepository;
@@ -46,6 +57,7 @@ public class PeopleServiceImpl implements PeopleService {
 
 	@Autowired
 	private ModelMapper modelMapper;
+
 	@Autowired
 	private CityRepository cityRepository;
 
@@ -60,6 +72,9 @@ public class PeopleServiceImpl implements PeopleService {
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private DeclarationRepository declarationRepository;
 
 	@Override
 	public ListPeopleDto findPeopleByLocationId(String locationId, Integer size, Integer page) {
@@ -224,13 +239,20 @@ public class PeopleServiceImpl implements PeopleService {
 
 	@Override
 	public AnalysisData getAnalysisData(UserDetails userDetails, String locationType, String[] locationIds) {
-		int male = 0;
-		int female = 0;
-
 		if (locationIds == null) {
 			locationIds = userRepository.getUserIdByCreateBy(userDetails.getUsername());
 		}
-
+		AnalysisData analysisData = null;
+		List<PeopleEntity> peopleEntities1 = null;
+		if (locationType != null) {
+			peopleEntities1 = peopleLocationRepository.findPeopleByLocationTypeAndLocationIds(locationIds, locationType,
+					null);
+		} else {
+			peopleEntities1 = peopleLocationRepository.findPeopleByLocationIds(locationIds, null);
+		}
+		
+		analysisData = getAnalysisFromListPeople(peopleEntities1);
+		
 		List<LocationInfo> locationInfos = new ArrayList<LocationInfo>();
 
 		for (String locationId : locationIds) {
@@ -240,39 +262,191 @@ public class PeopleServiceImpl implements PeopleService {
 			} else {
 				peopleEntities = peopleLocationRepository.findPeopleByLocationId(locationId, null);
 			}
-			LocationInfo locationInfo = LocationInfo.builder().totalPeople(peopleEntities.size()).build();
-			if (peopleEntities.size() == 0) {
-				switch (locationId.length()) {
-				case 2:
-					locationInfo.setLocationName(cityRepository.getById(locationId).getCityName());
-					break;
-				case 4:
-					locationInfo.setLocationName(districtRepository.getById(locationId).getDistrictName());
-					break;
-				case 6:
-					locationInfo.setLocationName(wardRepository.getById(locationId).getWardName());
-					break;
-				case 8:
-					locationInfo.setLocationName(villageRepository.getById(locationId).getVillageName());
-					break;
-				default:
-					break;
-				}
 
+			LocationInfo locationInfo = new LocationInfo();
+			locationInfo.setTotalPeople(peopleEntities.size());
+			switch (locationId.length()) {
+			case 2:
+				locationInfo.setLocationName(cityRepository.getById(locationId).getCityName());
+				break;
+			case 4:
+				locationInfo.setLocationName(districtRepository.getById(locationId).getDistrictName());
+				break;
+			case 6:
+				locationInfo.setLocationName(wardRepository.getById(locationId).getWardName());
+				break;
+			case 8:
+				locationInfo.setLocationName(villageRepository.getById(locationId).getVillageName());
+				break;
+			default:
+				break;
 			}
 			locationInfos.add(locationInfo);
-			for (PeopleEntity peopleEntity : peopleEntities) {
-				if (peopleEntity.getGender().equalsIgnoreCase("Nam")) {
-					male++;
-				} else if (peopleEntity.getGender().equalsIgnoreCase("Nữ")) {
-					female++;
-				}
-			}
 
 		}
 
-		AnalysisData analysisData = new AnalysisData(locationInfos, male, female);
+		analysisData.setLocationInfos(locationInfos);
 		return analysisData;
+	}
+
+	private AnalysisData getAnalysisFromListPeople(List<PeopleEntity> peopleEntities) {
+		int male = 0, female = 0;
+		List<AgeGender> ageGenders = new ArrayList<AgeGender>();
+		Map<String, Integer> educationMap = new HashMap<String, Integer>();
+		Map<AgeEducation, Integer> educationAgeMap = new HashMap<AgeEducation, Integer>();
+
+		AgeGender ageGender1 = new AgeGender(AgeLevel.LEVEL1, 0, 0);
+		AgeGender ageGender2 = new AgeGender(AgeLevel.LEVEL2, 0, 0);
+		AgeGender ageGender3 = new AgeGender(AgeLevel.LEVEL3, 0, 0);
+		AgeGender ageGender4 = new AgeGender(AgeLevel.LEVEL4, 0, 0);
+		AgeGender ageGender5 = new AgeGender(AgeLevel.LEVEL5, 0, 0);
+		AgeGender ageGender6 = new AgeGender(AgeLevel.LEVEL6, 0, 0);
+		AgeGender ageGender7 = new AgeGender(AgeLevel.LEVEL7, 0, 0);
+		AgeGender ageGender8 = new AgeGender(AgeLevel.LEVEL8, 0, 0);
+
+		educationMap.put("0/12", 0);
+		educationMap.put("1/12", 0);
+		educationMap.put("2/12", 0);
+		educationMap.put("3/12", 0);
+		educationMap.put("4/12", 0);
+		educationMap.put("5/12", 0);
+		educationMap.put("6/12", 0);
+		educationMap.put("7/12", 0);
+		educationMap.put("8/12", 0);
+		educationMap.put("9/12", 0);
+		educationMap.put("10/12", 0);
+		educationMap.put("11/12", 0);
+		educationMap.put("12/12", 0);
+		educationMap.put("Trung cấp", 0);
+		educationMap.put("Cao đẳng", 0);
+		educationMap.put("Đại học", 0);
+		educationMap.put("Sau đại học", 0);
+
+		for (PeopleEntity peopleEntity : peopleEntities) {
+			String educationLevel = peopleEntity.getEducationLevel();
+			int age = (new Date()).getYear() - peopleEntity.getDateOfBirth().getYear();
+
+			educationMap.put(educationLevel, educationMap.get(educationLevel) + 1);
+
+			String genderName = peopleEntity.getGender();
+
+			if (genderName.equalsIgnoreCase("nam")) {
+				male++;
+			} else {
+				female++;
+			}
+			if (age >= 0 && age <= 5) {
+				if (genderName.equalsIgnoreCase("nam")) {
+					ageGender1.setMale(ageGender1.getMale() + 1);
+				} else {
+					ageGender1.setFemale(ageGender1.getFemale() + 1);
+				}
+				AgeEducation ageEducation = new AgeEducation(AgeLevel.LEVEL1, educationLevel);
+				if (educationAgeMap.containsKey(ageEducation)) {
+					educationAgeMap.put(ageEducation, educationAgeMap.get(ageEducation) + 1);
+				} else {
+					educationAgeMap.put(ageEducation, 1);
+				}
+			} else if (age >= 6 && age <= 10) {
+				if (genderName.equalsIgnoreCase("nam")) {
+					ageGender2.setMale(ageGender1.getMale() + 1);
+				} else {
+					ageGender2.setFemale(ageGender1.getFemale() + 1);
+				}
+				AgeEducation ageEducation = new AgeEducation(AgeLevel.LEVEL2, educationLevel);
+				if (educationAgeMap.containsKey(ageEducation)) {
+					educationAgeMap.put(ageEducation, educationAgeMap.get(ageEducation) + 1);
+				} else {
+					educationAgeMap.put(ageEducation, 1);
+				}
+			} else if (age >= 11 && age <= 14) {
+				if (genderName.equalsIgnoreCase("nam")) {
+					ageGender3.setMale(ageGender1.getMale() + 1);
+				} else {
+					ageGender3.setFemale(ageGender1.getFemale() + 1);
+				}
+				AgeEducation ageEducation = new AgeEducation(AgeLevel.LEVEL3, educationLevel);
+				if (educationAgeMap.containsKey(ageEducation)) {
+					educationAgeMap.put(ageEducation, educationAgeMap.get(ageEducation) + 1);
+				} else {
+					educationAgeMap.put(ageEducation, 1);
+				}
+			} else if (age >= 15 && age <= 17) {
+				if (genderName.equalsIgnoreCase("nam")) {
+					ageGender4.setMale(ageGender1.getMale() + 1);
+				} else {
+					ageGender4.setFemale(ageGender1.getFemale() + 1);
+				}
+				AgeEducation ageEducation = new AgeEducation(AgeLevel.LEVEL4, educationLevel);
+				if (educationAgeMap.containsKey(ageEducation)) {
+					educationAgeMap.put(ageEducation, educationAgeMap.get(ageEducation) + 1);
+				} else {
+					educationAgeMap.put(ageEducation, 1);
+				}
+			} else if (age >= 18 && age <= 21) {
+				if (genderName.equalsIgnoreCase("nam")) {
+					ageGender5.setMale(ageGender1.getMale() + 1);
+				} else {
+					ageGender5.setFemale(ageGender1.getFemale() + 1);
+				}
+				AgeEducation ageEducation = new AgeEducation(AgeLevel.LEVEL5, educationLevel);
+				if (educationAgeMap.containsKey(ageEducation)) {
+					educationAgeMap.put(ageEducation, educationAgeMap.get(ageEducation) + 1);
+				} else {
+					educationAgeMap.put(ageEducation, 1);
+				}
+			} else if (age >= 22 && age <= 30) {
+				if (genderName.equalsIgnoreCase("nam")) {
+					ageGender6.setMale(ageGender1.getMale() + 1);
+				} else {
+					ageGender6.setFemale(ageGender1.getFemale() + 1);
+				}
+				AgeEducation ageEducation = new AgeEducation(AgeLevel.LEVEL6, educationLevel);
+				if (educationAgeMap.containsKey(ageEducation)) {
+					educationAgeMap.put(ageEducation, educationAgeMap.get(ageEducation) + 1);
+				} else {
+					educationAgeMap.put(ageEducation, 1);
+				}
+			} else if (age >= 31 && age <= 60) {
+				if (genderName.equalsIgnoreCase("nam")) {
+					ageGender7.setMale(ageGender1.getMale() + 1);
+				} else {
+					ageGender7.setFemale(ageGender1.getFemale() + 1);
+				}
+				AgeEducation ageEducation = new AgeEducation(AgeLevel.LEVEL7, educationLevel);
+				if (educationAgeMap.containsKey(ageEducation)) {
+					educationAgeMap.put(ageEducation, educationAgeMap.get(ageEducation) + 1);
+				} else {
+					educationAgeMap.put(ageEducation, 1);
+				}
+			} else if (age > 60) {
+				if (genderName.equalsIgnoreCase("nam")) {
+					ageGender8.setMale(ageGender1.getMale() + 1);
+				} else {
+					ageGender8.setFemale(ageGender1.getFemale() + 1);
+				}
+				AgeEducation ageEducation = new AgeEducation(AgeLevel.LEVEL8, educationLevel);
+				if (educationAgeMap.containsKey(ageEducation)) {
+					educationAgeMap.put(ageEducation, educationAgeMap.get(ageEducation) + 1);
+				} else {
+					educationAgeMap.put(ageEducation, 1);
+				}
+			}
+		}
+
+		ageGenders.add(ageGender1);
+		ageGenders.add(ageGender2);
+		ageGenders.add(ageGender3);
+		ageGenders.add(ageGender4);
+		ageGenders.add(ageGender5);
+		ageGenders.add(ageGender6);
+		ageGenders.add(ageGender7);
+		ageGenders.add(ageGender8);
+
+		AnalysisData analysisData = AnalysisData.builder().maleNumber(male).femaleNumber(female).ageGenders(ageGenders)
+				.educationMap(educationMap).educationAge(educationAgeMap).build();
+		return analysisData;
+
 	}
 
 	@Override
@@ -295,5 +469,74 @@ public class PeopleServiceImpl implements PeopleService {
 			}
 		}
 		return "Cập nhật thành công!";
+	}
+
+	@Override
+	public List<LocationInfo> getLocationInfoCurrent(UserDetails userDetails, String locationType,
+			String[] locationIds) {
+		if (locationIds == null) {
+			locationIds = userRepository.getUserIdByCreateBy(userDetails.getUsername());
+		}
+		List<LocationInfo> locationInfos = new ArrayList<LocationInfo>();
+
+		for (String locationId : locationIds) {
+			List<PeopleEntity> peopleEntities = null;
+			if (locationType != null) {
+				peopleEntities = peopleLocationRepository.findPeopleByLocationType(locationId, locationType, null);
+			} else {
+				peopleEntities = peopleLocationRepository.findPeopleByLocationId(locationId, null);
+			}
+
+			LocationInfo locationInfo = new LocationInfo();
+
+			switch (locationId.length()) {
+			case 2:
+				CityEntity cityEntity = cityRepository.getById(locationId);
+				locationInfo = LocationInfo.builder().locationId(cityEntity.getCityId())
+						.locationName(cityEntity.getCityName()).build();
+				break;
+			case 4:
+				DistrictEntity districtEntity = districtRepository.getById(locationId);
+				locationInfo = LocationInfo.builder().locationId(districtEntity.getDistrictId())
+						.locationName(districtEntity.getDistrictName()).build();
+				break;
+			case 6:
+				WardEntity wardEntity = wardRepository.getById(locationId);
+				locationInfo = LocationInfo.builder().locationId(wardEntity.getWardId())
+						.locationName(wardEntity.getWardName()).build();
+				break;
+			case 8:
+				VillageEntity villageEntity = villageRepository.getById(locationId);
+				locationInfo = LocationInfo.builder().locationId(villageEntity.getVillageId())
+						.locationName(villageEntity.getVillageName()).build();
+				break;
+			default:
+				break;
+			}
+
+			int male = 0, female = 0;
+			for (PeopleEntity peopleEntity : peopleEntities) {
+				if (peopleEntity.getGender().equalsIgnoreCase("nam")) {
+					male++;
+				} else {
+					female++;
+				}
+			}
+
+			locationInfo.setTotalPeople(peopleEntities.size());
+
+			Optional<DeclarationTime> optional = declarationRepository.findByUserUsername(locationId);
+			if (optional.isPresent()) {
+				locationInfo.setState(optional.get().isState());
+			} else {
+				locationInfo.setState(true);
+			}
+
+			locationInfo.setFemale(female);
+			locationInfo.setMale(male);
+			locationInfos.add(locationInfo);
+
+		}
+		return locationInfos;
 	}
 }

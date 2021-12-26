@@ -13,7 +13,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class DeclarationTimeDto {
 	private String username;
+	private String locationName;
 	private Date start;
 	private Date end;
 	private String message;
+	private boolean state;
 }

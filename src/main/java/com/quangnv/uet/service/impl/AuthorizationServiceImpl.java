@@ -10,14 +10,39 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
 	@Override
 	public boolean checkAuthorization(String username, UserDetails userDetails) {
-		if (userDetails.getAuthorities().toString().contains("ROEL_A1")
-				|| userDetails.getAuthorities().toString().contains("ROEL_ADMIN")) {
+		if (username == null) {
+			return true;
+		}
+		if (userDetails.getAuthorities().toString().contains("ROLE_A1")
+				|| userDetails.getAuthorities().toString().contains("ROLE_ADMIN")) {
 			return true;
 		}
 		if (username.substring(0, userDetails.getUsername().length()).equals(userDetails.getUsername())) {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean checkAuthorization(String[] usernames, UserDetails userDetails) {
+		String authoiation = userDetails.getAuthorities().toString();
+		boolean test = userDetails.getAuthorities().toString().contains("ROEL_A1");
+		if (userDetails.getAuthorities().toString().contains("ROLE_A1")
+				|| userDetails.getAuthorities().toString().contains("ROLE_ADMIN") || usernames == null) {
+			return true;
+		}
+		if (userDetails.getAuthorities().toString().contains("ROLE_B2")) {
+			return false;
+		}
+		for (String username : usernames) {
+			if (username.length() < userDetails.getUsername().length()) {
+				return false;
+			}
+			if (!username.substring(0, userDetails.getUsername().length()).equals(userDetails.getUsername())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override

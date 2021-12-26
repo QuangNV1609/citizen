@@ -41,7 +41,10 @@ public class UserEntity {
 
 	@Column(name = "enable")
 	private boolean enable;
-
+	
+	@Column(name = "level", columnDefinition = "nvarchar(30)")
+	private String level;
+	
 	@Column(name = "create_at", updatable = false)
 	@Temporal(TemporalType.TIMESTAMP)
 	@CreatedDate

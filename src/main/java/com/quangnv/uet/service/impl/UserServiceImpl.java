@@ -81,29 +81,34 @@ public class UserServiceImpl implements UserSevice {
 
 		if (userEntityAdmin.getUserRole().equals("ROLE_ADMIN")) {
 			newUserEntity.setUserRole("ROLE_A1");
+			newUserEntity.setLevel("Bộ Y Tế");
 		} else if (userEntityAdmin.getUserRole().equals("ROLE_A1")) {
 			CityEntity cityEntity = CityEntity.builder().cityId(userDto.getUsername()).cityName(userDto.getLocation())
 					.build();
 			cityRepository.save(cityEntity);
 			newUserEntity.setUserRole("ROLE_A2");
+			newUserEntity.setLevel("Tỉnh");
 		} else if (userEntityAdmin.getUserRole().equals("ROLE_A2")) {
 			DistrictEntity districtEntity = DistrictEntity.builder().districtId(userDto.getUsername())
 					.districtName(userDto.getLocation()).build();
 			districtEntity.setCity(cityRepository.findById(username).get());
 			districtRepository.save(districtEntity);
 			newUserEntity.setUserRole("ROLE_A3");
+			newUserEntity.setLevel("Huyện");
 		} else if (userEntityAdmin.getUserRole().equals("ROLE_A3")) {
 			WardEntity wardEntity = WardEntity.builder().wardId(userDto.getUsername()).wardName(userDto.getLocation())
 					.build();
 			wardEntity.setDistrict(districtRepository.findById(username).get());
 			wardRepository.save(wardEntity);
 			newUserEntity.setUserRole("ROLE_B1");
+			newUserEntity.setLevel("Xã");
 		} else if (userEntityAdmin.getUserRole().equals("ROLE_B1")) {
 			VillageEntity villageEntity = VillageEntity.builder().villageName(userDto.getLocation())
 					.villageId(userDto.getUsername()).build();
 			villageEntity.setWard(wardRepository.findById(username).get());
 			villageRepository.save(villageEntity);
 			newUserEntity.setUserRole("ROLE_B2");
+			newUserEntity.setLevel("Làng");
 		}
 		if (userDto.getState().equals("Active")) {
 			newUserEntity.setEnable(true);
@@ -117,15 +122,6 @@ public class UserServiceImpl implements UserSevice {
 		newUserEntity = userRepository.save(newUserEntity);
 
 		return modelMapper.map(newUserEntity, UserDto.class);
-	}
-
-	@Override
-	public UserDto saveAdmin(UserDto userDto) {
-		UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
-		userEntity.setUserRole("ROLE_A1");
-		userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
-		userRepository.save(userEntity);
-		return modelMapper.map(userEntity, UserDto.class);
 	}
 
 	@Override
@@ -191,7 +187,10 @@ public class UserServiceImpl implements UserSevice {
 			userDto.setStart(declarationTime.getStart());
 			userDto.setEnd(declarationTime.getEnd());
 		}
-		userDto.setLocation(getUserLocationDetails(userEntity.getUsername()));
+		if (!userEntity.getUserRole().equals("ROLE_ADMIN")) {
+			userDto.setLocation(getUserLocationDetails(userEntity.getUsername()));
+		}
+
 		userDto.setPassword(null);
 		return userDto;
 	}
@@ -262,6 +261,38 @@ public class UserServiceImpl implements UserSevice {
 			break;
 		}
 		return location;
+	}
+
+	@Override
+	public String changePasswordUser(UserDto userDto) {
+		String message = "";
+		Optional<UserEntity> optional = userRepository.findById(userDto.getUsername());
+
+		if (!optional.isPresent()) {
+			throw new UsernameNotFoundException(userDto.getUsername() + " not found!");
+		}
+		UserEntity userEntity = optional.get();
+		if (!passwordEncoder.matches(userDto.getOldPassword(), userEntity.getPassword())) {
+			throw new UsernameNotFoundException("Mật khẩu cũ không đúng!");
+		}
+
+		message = "Thay đổi mật khẩu thành công!";
+		userEntity.setPassword(passwordEncoder.encode(userDto.getPassword()).toString());
+		userRepository.save(userEntity);
+
+		return message;
+	}
+
+	@Override
+	public UserDto saveAdmin(UserDto userDto) {
+		UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
+		userEntity.setUserRole("ROLE_ADMIN");
+		userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
+		userEntity.setLevel("ADMIN");
+		userEntity.setEnable(true);
+		userRepository.save(userEntity);
+		userEntity.setPassword(null);
+		return modelMapper.map(userEntity, UserDto.class);
 	}
 
 }

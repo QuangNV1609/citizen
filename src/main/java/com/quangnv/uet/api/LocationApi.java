@@ -77,23 +77,4 @@ public class LocationApi {
 		return new ResponseEntity<List<VillageDto>>(villageDtos, HttpStatus.OK);
 	}
 
-//	@PostMapping(value = "/city")
-//	public void saveCity(@RequestBody List<CityDto> cityDtos) {
-//		locationSevice.saveListCity(cityDtos);
-//	}
-//
-//	@PostMapping(value = "/district/{cityId}")
-//	public void saveDistrict(@RequestBody List<CityDto> cityDtos, @PathVariable("cityId") Integer cityId) {
-//		locationSevice.saveListCity(cityDtos);
-//	}
-//
-//	@PostMapping(value = "/ward/{districtId}")
-//	public void saveWard(@RequestBody List<CityDto> cityDtos, @PathVariable("districtId") Integer districtId) {
-//		locationSevice.saveListCity(cityDtos);
-//	}
-//
-//	@PostMapping(value = "/village/{villageId}")
-//	public void saveVillage(@RequestBody List<CityDto> cityDtos, @PathVariable("villageId") Integer villageId) {
-//		locationSevice.saveListCity(cityDtos);
-//	}
 }

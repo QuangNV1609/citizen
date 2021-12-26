@@ -48,6 +48,9 @@ public class DeclarationTime {
 	@CreatedDate
 	private Date createAt;
 	
+	@Column(name = "state")
+	private boolean state;
+	
 	@OneToOne
 	@JoinColumn(name = "user")
 	@MapsId("username")

@@ -65,7 +65,7 @@ public class UserApi extends HandleException {
 		userDto.setPassword(null);
 		return new ResponseEntity<UserDto>(userDto, HttpStatus.OK);
 	}
-
+	
 	@PostMapping(value = "/register/admin")
 	public ResponseEntity<UserDto> registerAdmin(@RequestBody UserDto userDto) {
 		userDto = userSevice.saveAdmin(userDto);
@@ -94,10 +94,19 @@ public class UserApi extends HandleException {
 	}
 
 	@PutMapping(value = "/disable/list/{enable}")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<String> disableListAccount(@PathVariable(value = "enable") String enable,
 			@RequestBody List<String> usernames) {
 		String createBy = SecurityContextHolder.getContext().getAuthentication().getName();
 		String message = userSevice.disableList(createBy, usernames, enable);
+		return new ResponseEntity<String>(message, HttpStatus.OK);
+	}
+
+	@PutMapping(value = "/edit/password")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<String> changePassword(@RequestBody UserDto userDto) {
+		userDto.setUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+		String message = userSevice.changePasswordUser(userDto);
 		return new ResponseEntity<String>(message, HttpStatus.OK);
 	}
 
@@ -106,18 +115,6 @@ public class UserApi extends HandleException {
 	public ResponseEntity<String> editPassword(@RequestBody UserDto userDto) {
 		String message = userSevice.changePassword(userDto);
 		return new ResponseEntity<String>(message, HttpStatus.OK);
-	}
-
-	@GetMapping(value = "/test")
-	@PreAuthorize("hasRole('ADMIN')")
-	public String test() {
-		System.out.println(((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).toString());
-		return "test";
-	}
-
-	@GetMapping(value = "/heroku")
-	public String heroku() {
-		return "test";
 	}
 
 }
